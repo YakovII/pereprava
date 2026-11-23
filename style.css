@@ -129,6 +129,27 @@ details.card p { margin: 10px 0 0; white-space: pre-line; }
   flex: 1; min-width: 150px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line);
   background: var(--card); color: var(--text); font: inherit; font-size: 14px;
 }
+.btn--primary { background: var(--accent); color: #fff; }
+.btn--danger { background: #fde8e8; color: #c0262d; }
+.btn:disabled { opacity: .6; }
+.card--warn { border-color: #e5a50a; background: #fff8e6; }
+@media (prefers-color-scheme: dark) { .card--warn { background: #3a2f12; } .btn--danger { background: #3d1b1d; color: #ff8a8f; } }
+.chips-s { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.mycard { border-color: var(--accent); }
+.form .field { display: block; margin-bottom: 10px; }
+.field > span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.field input, .field textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--text); font: inherit;
+}
+.checks { display: flex; flex-direction: column; gap: 6px; }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin: 4px 0; }
+.check input { margin-top: 3px; }
+.qr { text-align: center; }
+.qr svg { width: 100%; max-width: 280px; height: auto; display: block; margin: 0 auto; }
+.code { font: 700 24px/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 3px; margin: 10px 0 4px; }
+.forget { margin: 24px 0 8px; text-align: center; }
+.linkbtn { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
 .howto p { margin: 0 0 8px; font-size: 14px; }
 .howto p:last-child { margin-bottom: 0; }
 .card--all p { margin: 10px 0 0; font-size: 14px; }
