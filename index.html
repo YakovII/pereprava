@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Форум</title>
+  <script src="https://st.max.ru/js/max-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <p class="hero__greet" id="greet"></p>
+    <h1 class="hero__title" id="forum-name">Форум</h1>
+    <p class="hero__sub" id="forum-sub"></p>
+    <p class="hero__meta" id="forum-meta"></p>
+  </header>
+
+  <main id="view" class="view" aria-live="polite">
+    <p class="muted">Загрузка…</p>
+  </main>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" data-tab="program" role="tab"><span class="tab__icon" aria-hidden="true">🗓</span>Программа</button>
+    <button class="tab" data-tab="places" role="tab"><span class="tab__icon" aria-hidden="true">📍</span>Площадки</button>
+    <button class="tab" data-tab="faq" role="tab"><span class="tab__icon" aria-hidden="true">❓</span>Вопросы</button>
+    <button class="tab" data-tab="contacts" role="tab"><span class="tab__icon" aria-hidden="true">☎️</span>Контакты</button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
