@@ -62,7 +62,7 @@
   function timeOf(s) { return esc(s.start) + (s.end ? '–' + esc(s.end) : ''); }
 
   // ---- «Мои планы»: хранятся на устройстве участника ----
-  function sessionId(day, s) { return day.id + '|' + s.start + '|' + s.title; }
+  function sessionId(day, s) { return s.id || (day.id + '|' + s.start + '|' + s.title); }
   function loadPlans() {
     var fromLocal = function () {
       try { return JSON.parse(localStorage.getItem(PLANS_KEY) || '{}') || {}; } catch (e) { return {}; }
@@ -85,9 +85,24 @@
     try { if (WA && WA.DeviceStorage) quiet(WA.DeviceStorage.setItem(PLANS_KEY, json)); } catch (e) {}
   }
   function togglePlan(id) {
-    if (plans[id]) delete plans[id]; else plans[id] = true;
+    var on = !plans[id];
+    if (on) plans[id] = true; else delete plans[id];
     haptic();
     savePlans();
+    if (WA && WA.initData) {
+      quiet(api('plan_stat', { sid: id, on: on }));             // обезличенная статистика для организаторов
+      if (remindOn) quiet(api('remind_set', { on: true, ids: Object.keys(plans) }));
+    }
+  }
+
+  // ---- Напоминания в чат по «Моим планам» ----
+  var remindOn = false;
+  try { remindOn = localStorage.getItem(PLANS_KEY + '_remind') === '1'; } catch (e) {}
+  function setRemind(on) {
+    remindOn = on;
+    try { localStorage.setItem(PLANS_KEY + '_remind', on ? '1' : '0'); } catch (e) {}
+    try { if (WA && WA.DeviceStorage) quiet(WA.DeviceStorage.setItem(PLANS_KEY + '_remind', on ? '1' : '0')); } catch (e) {}
+    return api('remind_set', { on: on, ids: Object.keys(plans) });
   }
 
   // ---- BackButton MAX ----
@@ -133,7 +148,7 @@
     var f = data.forum || {};
     var days = data.days || [];
     var now = eventNow();
-    var html = '';
+    var html = noticeHtml();
 
     // Что идёт сейчас и что дальше
     var first = days[0], last = days[days.length - 1];
@@ -167,6 +182,7 @@
       tile('mine', '⭐', 'Мои планы', myCount ? myCount + ' ' + plural(myCount, 'мероприятие', 'мероприятия', 'мероприятий') : 'Отметьте звёздочкой') +
       tile('people', '🤝', 'Коллеги', 'Визитки и знакомства') +
       tile('faq', '❓', 'Вопросы', 'Частые вопросы') +
+      (state.admin ? tile('admin', '⚙️', 'Организатор', 'Объявления, программа, статистика') : '') +
       '</div>';
 
     // Интерактив весь день
@@ -180,6 +196,12 @@
     html += linksBlock();
     if (f.timezone) html += '<p class="muted small">🕒 ' + esc(f.timezone) + '</p>';
     return html;
+  }
+
+  function noticeHtml() {
+    var n = window.__NOTICE__;
+    if (!n || !n.text) return '';
+    return '<div class="card card--notice"><div class="card__title">📢 Важно</div><p>' + esc(n.text) + '</p></div>';
   }
 
   function tile(go, icon, title, sub) {
@@ -230,6 +252,12 @@
       '<select class="select" id="place-filter" aria-label="Площадка"><option value="">Все площадки</option>' +
       usedPlaces.map(function (p) { return '<option value="' + esc(p.id) + '"' + (state.place === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>'; }).join('') +
       '</select></div>';
+
+    if (state.mine && WA && WA.initData) {
+      html += '<div class="card remind"><div><div class="card__title">🔔 Напоминать в чате</div>' +
+        '<div class="card__meta">Бот напишет за 10–15 минут до начала каждого мероприятия из «Моих планов».</div></div>' +
+        '<button class="switch' + (remindOn ? ' switch--on' : '') + '" data-remind="' + (remindOn ? '0' : '1') + '" role="switch" aria-checked="' + remindOn + '" aria-label="Напоминания"><span></span></button></div>';
+    }
 
     var acts = data.activities || [];
     if (acts.length && !state.mine && !state.place) {
@@ -582,10 +610,19 @@
   });
 
   view.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-net],[data-intro],[data-star],[data-plan],[data-go],[data-mine],[data-placeprog],[data-day],[data-session],[data-map],[data-back]');
+    var el = e.target.closest('[data-adm],[data-remind],[data-net],[data-intro],[data-star],[data-plan],[data-go],[data-mine],[data-placeprog],[data-day],[data-session],[data-map],[data-back]');
     if (!el) return;
     if (el.tagName === 'A' && el.hasAttribute('data-map')) e.preventDefault();
-    if (el.hasAttribute('data-net')) {
+    if (el.hasAttribute('data-adm')) {
+      if (window.PPAdmin) window.PPAdmin.action(el.getAttribute('data-adm'), el);
+    } else if (el.hasAttribute('data-remind')) {
+      var on = el.getAttribute('data-remind') === '1';
+      el.disabled = true;
+      setRemind(on).then(function () {
+        haptic(); render();
+        if (on && !Object.keys(plans).length) toast('Напоминания включены. Отметьте мероприятия звёздочкой ☆');
+      }).catch(function (err) { remindOn = !on; toast(err.message); render(); });
+    } else if (el.hasAttribute('data-net')) {
       netAction(el.getAttribute('data-net'), el);
     } else if (el.hasAttribute('data-intro')) {
       var to = el.getAttribute('data-intro');
@@ -602,6 +639,7 @@
       var p = view.dataset.detail.split(':'); renderSession(p[0], +p[1]);
     } else if (el.hasAttribute('data-go')) {
       var target = el.getAttribute('data-go');
+      if (target === 'admin' && window.PPAdmin) window.PPAdmin.reset();
       if (target === 'mine') { state.mine = true; state.place = ''; target = 'program'; }
       else if (target === 'program') { state.mine = false; }
       go(target);
@@ -645,6 +683,22 @@
     }
   });
 
+  function toast(text) {
+    var t = document.createElement('div');
+    t.className = 'toast'; t.textContent = text;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 3500);
+  }
+
+  // Доступ для панели организатора (admin.js)
+  window.PP = {
+    WA: WA, api: api, esc: esc, toast: toast, haptic: haptic, screens: screens, view: view,
+    getData: function () { return data; },
+    setData: function (d) { data = d; fillHeader(); },
+    state: state, go: go, render: render, plural: plural,
+    showBack: showBack, hideBack: hideBack
+  };
+
   // ---- Старт ----
   function fillHeader() {
     var f = data.forum || {};
@@ -672,7 +726,20 @@
     fetch('content.json', { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }))
     .then(function (json) { data = json; fillHeader(); return loadPlans(); })
-    .then(function (p) { plans = p || {}; render(); })
+    .then(function (p) {
+      plans = p || {};
+      try {
+        if (WA && WA.DeviceStorage) {
+          quiet(WA.DeviceStorage.getItem(PLANS_KEY + '_remind').then(function (r) {
+            if (r && r.value) remindOn = r.value === '1';
+          }));
+        }
+      } catch (e) {}
+      render();
+      if (WA && WA.initData) {
+        api('whoami').then(function (r) { state.admin = !!r.admin; if (state.tab === 'home') render(); }).catch(function () {});
+      }
+    })
     .catch(function () {
       view.innerHTML = '<p class="muted">Не удалось загрузить данные. Проверьте интернет и откройте приложение ещё раз.</p>';
     });

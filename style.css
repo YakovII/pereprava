@@ -150,6 +150,27 @@ details.card p { margin: 10px 0 0; white-space: pre-line; }
 .code { font: 700 24px/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 3px; margin: 10px 0 4px; }
 .forget { margin: 24px 0 8px; text-align: center; }
 .linkbtn { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
+.card--notice { border-color: #e5a50a; background: #fff8e6; }
+.card--notice p { margin: 6px 0 0; white-space: pre-line; }
+@media (prefers-color-scheme: dark) { .card--notice { background: #3a2f12; } }
+.remind { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.switch { flex: none; width: 50px; height: 30px; border-radius: 15px; border: 0; background: var(--line); position: relative; cursor: pointer; }
+.switch span { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.switch--on { background: var(--live); }
+.switch--on span { left: 23px; }
+.progress { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin: 8px 0; }
+.progress span { display: block; height: 100%; background: var(--accent); }
+.stat { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.stat:last-child { border-bottom: 0; }
+.row-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.row-item .btn { margin: 0; flex: none; }
+.form .row .field { flex: 1; }
+select.select { width: 100%; }
+.toast {
+  position: fixed; left: 16px; right: 16px; bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 10;
+  background: #16181d; color: #fff; padding: 12px 14px; border-radius: 12px; font-size: 14px; text-align: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+}
 .howto p { margin: 0 0 8px; font-size: 14px; }
 .howto p:last-child { margin-bottom: 0; }
 .card--all p { margin: 10px 0 0; font-size: 14px; }
